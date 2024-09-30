@@ -17,16 +17,16 @@ class ExecutionInProgress : IExecutionInProgress
         AllowSynchronousContinuations = true
     };
 
-    public ExecutionInProgress(ChatRequest chatRequest, ResponseParsingFunc responseParser)
+    public ExecutionInProgress(ChatRequest chatRequest, CancellationToken cancellationToken, ResponseParsingFunc responseParser)
     {
-        _responseParsingTask = ExecutionInProgressImpl(chatRequest, responseParser);
+        _responseParsingTask = ExecutionInProgressImpl(chatRequest, cancellationToken, responseParser);
     }
     
-    async Task ExecutionInProgressImpl(ChatRequest request, ResponseParsingFunc responseParsingFunc)
+    async Task ExecutionInProgressImpl(ChatRequest request, CancellationToken cancellationToken, ResponseParsingFunc responseParsingFunc)
     {
         try
         {
-            await StartResponseParsingTask(request, responseParsingFunc, _cts.Token);
+            await StartResponseParsingTask(request, responseParsingFunc, cancellationToken);
         }
         finally
         {

@@ -11,7 +11,7 @@ public abstract class OpenAILanguageModelBase(HttpClient httpClient, bool suppor
     public virtual bool SupportFunctionCalls => true;
     public virtual bool SupportImageInputs => true;
     
-    public IExecutionInProgress Execute(ChatRequest request, CancellationToken cancellationToken) => new ExecutionInProgress(request, ExecuteImpl);
+    public IExecutionInProgress Execute(ChatRequest request, CancellationToken cancellationToken) => new ExecutionInProgress(request, cancellationToken, ExecuteImpl);
 
     struct ChunkOrDone
     {

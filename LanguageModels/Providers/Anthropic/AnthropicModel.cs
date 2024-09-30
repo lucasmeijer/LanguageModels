@@ -16,7 +16,7 @@ class AnthropicModel(AnthropicHttpClient anthropicHttpClient, string model) : IL
     public bool SupportFunctionCalls => true;
     public bool SupportImageInputs => true;
     
-    public IExecutionInProgress Execute(ChatRequest request, CancellationToken cancellationToken) => new ExecutionInProgress(request, ExecuteImpl);
+    public IExecutionInProgress Execute(ChatRequest request, CancellationToken cancellationToken) => new ExecutionInProgress(request, cancellationToken, ExecuteImpl);
 
     async IAsyncEnumerable<JsonElement> SseStreamFor(Stream stream, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
