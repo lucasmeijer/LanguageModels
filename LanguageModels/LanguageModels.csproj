@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <RootNamespace>LanguageModels</RootNamespace>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <Version>1.0.0-beta</Version>
     </PropertyGroup>
 
     <ItemGroup>
