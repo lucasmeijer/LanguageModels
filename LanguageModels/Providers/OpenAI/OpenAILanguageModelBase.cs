@@ -230,6 +230,7 @@ public abstract class OpenAILanguageModelBase(HttpClient httpClient, bool suppor
             {
                 ["name"] = f.Name,
                 ["description"] = f.Description,
+                ["strict"] = f.Strict,
                 ["parameters"] = f.InputSchema.Deserialize<JsonObject>()
             }
         };

@@ -38,7 +38,15 @@ public record ChatRequest
     public Func<FunctionInvocation, Function, Task<bool>>? FunctionApproval { get; init; }
 }
 
-public record Function(string Name, string? Description, JsonDocument InputSchema, bool RequiresExplicitApproval, Func<JsonDocument, Task<string>>? Implementation);
+public record Function(
+    string Name,
+    string? Description,
+    JsonDocument InputSchema,
+    bool RequiresExplicitApproval,
+    Func<JsonDocument, Task<string>>? Implementation)
+{
+    public bool Strict;
+}
 
 public record FunctionInvocation(string Id, string Name, JsonDocument Parameters) : IMessage;
 public record FunctionReturnValue(string Id, bool Successful, string Result) : IMessage;
@@ -53,7 +61,7 @@ public record ChatMessage(string Role, string Text) : IMessage;
 
 public record ImageMessage(string Role, string MimeType, string Data) : IMessage;
 
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, Inherited = false)]
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.Field, Inherited = false)]
 [MeansImplicitUse]
 public sealed class DescriptionForLanguageModel(string description) : Attribute
 {
