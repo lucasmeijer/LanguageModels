@@ -30,12 +30,11 @@ public static class CSharpBackedFunctions
             var functionFor = new Function(
                 functionName, 
                 attribute.Description,
-                JsonDocument.Parse(InputSchemas.InputSchemaFor(methodInfo).ToJsonString()), 
+                JsonDocument.Parse(InputSchemas.InputSchemaFor(methodInfo).ToJsonString()),
                 methodInfo.GetCustomAttribute<RequiresExplicitApproval>() != null,
-                jsonArguments => Implementation(methodInfo, o, jsonArguments))
-            {
-                Strict = true
-            };
+                true,
+                jsonArguments => Implementation(methodInfo, o, jsonArguments));
+            
             yield return functionFor;
         }
     }

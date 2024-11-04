@@ -43,10 +43,8 @@ public record Function(
     string? Description,
     JsonDocument InputSchema,
     bool RequiresExplicitApproval,
-    Func<JsonDocument, Task<string>>? Implementation)
-{
-    public bool Strict;
-}
+    bool Strict,
+    Func<JsonDocument, Task<string>>? Implementation);
 
 public record FunctionInvocation(string Id, string Name, JsonDocument Parameters) : IMessage;
 public record FunctionReturnValue(string Id, bool Successful, string Result) : IMessage;
