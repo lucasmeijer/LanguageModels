@@ -1,10 +1,17 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace LanguageModels;
 
 public static class CSharpBackedFunctions
 {
+    private static JsonSerializerOptions JsonSerializerOptions { get; } = new ()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+    
     public static Function[] Create(object[] objects)
     {
         return objects.SelectMany(CreateFunctionFor).ToArray();
@@ -23,9 +30,11 @@ public static class CSharpBackedFunctions
             var functionFor = new Function(
                 functionName, 
                 attribute.Description,
-                JsonDocument.Parse(InputSchemas.InputSchemaFor(methodInfo).ToJsonString()), 
+                JsonDocument.Parse(InputSchemas.InputSchemaFor(methodInfo).ToJsonString()),
                 methodInfo.GetCustomAttribute<RequiresExplicitApproval>() != null,
+                true,
                 jsonArguments => Implementation(methodInfo, o, jsonArguments));
+            
             yield return functionFor;
         }
     }
@@ -68,11 +77,7 @@ public static class CSharpBackedFunctions
                 return null;
             
             if (jsonArgumentValue.ValueKind == JsonValueKind.Object)
-            {
-                var constructorInfo = p.ParameterType.GetConstructors().Single();
-                var arguments = constructorInfo.GetParameters().Select(p => ArgumentFor(p, jsonArgumentValue)).ToArray();
-                return constructorInfo.Invoke(arguments);
-            }
+                return JsonSerializer.Deserialize(jsonArgumentValue.ToString(), p.ParameterType, JsonSerializerOptions);
 
             if (p.ParameterType == typeof(string)) return jsonArgumentValue.GetString();
             if (p.ParameterType == typeof(float)) return (float)jsonArgumentValue.GetDouble();

@@ -7,6 +7,7 @@ public class OpenAIModels(VanillaOpenAIHttpClient httpClient)
 {
     public ILanguageModel Gpt4 { get; } = new VanillaOpenAI(httpClient, "gpt-4");
     public ILanguageModel Gpt4o { get; } = new VanillaOpenAI(httpClient, "gpt-4o");
+    public ILanguageModel Gpt4oMini { get; } = new VanillaOpenAI(httpClient, "gpt-4o-mini");
     public ILanguageModel Gpt35Turbo { get; } = new VanillaOpenAI(httpClient, "gpt-3.5-turbo");
     public ILanguageModel O1Preview { get; } = new O1Preview(httpClient);
 }

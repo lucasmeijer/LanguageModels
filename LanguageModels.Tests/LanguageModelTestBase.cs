@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -168,11 +169,15 @@ public abstract class LanguageModelTestBase
                                             mybool => true
                                             record.nested_string => nested
                                             record2.nest.nested_string => doublenest
+                                            record3.enum => B
+                                            record3.array => [23, 42, 1024]
+                                            record3.field => foo
+                                            record3.recursive[0].field => bar
+                                            record3.recursive[0].recursive => []
                                             """)
                 ],
                 Functions = CSharpBackedFunctions.Create([new TestFunction()])
             }, default);
-
             allMessages = await execution.ReadCompleteMessagesAsync().ReadAll();
         }
         var functionReturnValue = allMessages.OfType<FunctionReturnValue>().Single();
@@ -183,7 +188,7 @@ public abstract class LanguageModelTestBase
     class TestFunction()
     {
         [DescriptionForLanguageModel("test function to invoke")]
-        public Task<string> Func(string MyString, int MYINT, float myfloat, bool mybool, MyRecord record, MyNested2 record2)
+        public Task<string> Func(string MyString, int MYINT, float myfloat, bool mybool, MyRecord record, MyNested2 record2, MyComplexRecord record3)
         {
             if (MyString != "hello")
                 throw new ArgumentException($"mystring was {MyString}");
@@ -197,11 +202,35 @@ public abstract class LanguageModelTestBase
                 throw new ArgumentException($"record.NestedString was {record.NestedString}!");
             if (record2.nest.NestedString != "doublenest")
                 throw new ArgumentException($"record2.nest.NestedString was {record2.nest.NestedString}!");
+            if (record3.Enum != MyEnum.B)
+                throw new ArgumentException($"record3.Enum was {record3.Enum}!");
+            if (record3.Array.Length != 3)
+                throw new ArgumentException($"record3.Array.Length was {record3.Array.Length}!");
+            if (record3.Field != "foo")
+                throw new ArgumentException($"record3.Field was {record3.Field}!");
+            if (record3.Recursive.Length != 1)
+                throw new ArgumentException($"record3.Recursive.Length was {record3.Array.Length}!");
+            if (record3.Recursive[0].Field != "bar")
+                throw new ArgumentException($"record3.Recursive[0].Field was {record3.Recursive[0].Field}!");
+            if (record3.Recursive[0].Recursive.Length != 0)
+                throw new ArgumentException($"record3.Recursive[0].Recursive.Length was {record3.Recursive[0].Recursive.Length}!");
+
             return Task.FromResult("All arguments were passed correctly!");
         }
 
         internal record MyRecord(string NestedString);
         internal record MyNested2(MyRecord nest);
+
+        internal enum MyEnum { A, B, C }
+        
+        internal record MyComplexRecord
+        {
+            public MyEnum Enum { get; set; }
+            public int[] Array { get; set; } = [];
+            [JsonInclude]
+            public string Field = "";
+            public MyComplexRecord[] Recursive { get; set; } = [];
+        }
     }
     
 

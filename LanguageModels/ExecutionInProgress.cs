@@ -17,16 +17,16 @@ class ExecutionInProgress : IExecutionInProgress
         AllowSynchronousContinuations = true
     };
 
-    public ExecutionInProgress(ChatRequest chatRequest, ResponseParsingFunc responseParser)
+    public ExecutionInProgress(ChatRequest chatRequest, CancellationToken cancellationToken, ResponseParsingFunc responseParser)
     {
-        _responseParsingTask = ExecutionInProgressImpl(chatRequest, responseParser);
+        _responseParsingTask = ExecutionInProgressImpl(chatRequest, cancellationToken, responseParser);
     }
     
-    async Task ExecutionInProgressImpl(ChatRequest request, ResponseParsingFunc responseParsingFunc)
+    async Task ExecutionInProgressImpl(ChatRequest request, CancellationToken cancellationToken, ResponseParsingFunc responseParsingFunc)
     {
         try
         {
-            await StartResponseParsingTask(request, responseParsingFunc, _cts.Token);
+            await StartResponseParsingTask(request, responseParsingFunc, cancellationToken);
         }
         finally
         {
@@ -78,14 +78,24 @@ class ExecutionInProgress : IExecutionInProgress
                     Messages =
                     [
                         ..request.Messages,
-                        ..receivedMessages,
-                        ..returnValues
+                        ..SortReceivedMessagesAndReturnValues(receivedMessages, returnValues)
                     ]
                 }, responseParsingFunc, cancellationToken);
             }
         }
         catch (TaskCanceledException)
         {
+        }
+    }
+
+    // OpenAI wants return values to come right as the next message after function calls, so we sort them.
+    private IEnumerable<IMessage> SortReceivedMessagesAndReturnValues(List<IMessage> receivedMessages, FunctionReturnValue[] returnValues)
+    {
+        foreach (var m in receivedMessages)
+        {
+            yield return m;
+            if (m is FunctionInvocation fi)
+                yield return returnValues.Single(rv => rv.Id == fi.Id);
         }
     }
 
@@ -125,8 +135,19 @@ class ExecutionInProgress : IExecutionInProgress
     }
 
 
-    public IAsyncEnumerable<string> ReadTextSegmentsAsync() => _textSegmentsChannel.Reader.ReadAllAsync();
-    public IAsyncEnumerable<IMessage> ReadCompleteMessagesAsync() => _completeMessagesChannel.Reader.ReadAllAsync();
+
+    async IAsyncEnumerable<T> ReadAllAsyncAndThrowIfUnderlyingTaskThrows<T>(ChannelReader<T> reader, Task underlyingTask) 
+    {
+        await foreach (var segment in reader.ReadAllAsync())
+        {
+            yield return segment;
+        }
+
+        await underlyingTask;
+    }
+    
+    public IAsyncEnumerable<string> ReadTextSegmentsAsync() => ReadAllAsyncAndThrowIfUnderlyingTaskThrows<string>(_textSegmentsChannel, _responseParsingTask);
+    public IAsyncEnumerable<IMessage> ReadCompleteMessagesAsync() => ReadAllAsyncAndThrowIfUnderlyingTaskThrows<IMessage>(_completeMessagesChannel, _responseParsingTask); 
 
     public async ValueTask DisposeAsync()
     {

@@ -20,7 +20,7 @@ class BedrockModel(AmazonBedrockRuntimeClient amazonBedrockRuntimeClient, string
     public string Identifier => model;
     public IExecutionInProgress Execute(ChatRequest request, CancellationToken cancellationToken)
     {
-        return new ExecutionInProgress(request, ExecuteImpl);
+        return new ExecutionInProgress(request, cancellationToken, ExecuteImpl);
     }
 
     public static class KnownModel

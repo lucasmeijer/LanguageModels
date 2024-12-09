@@ -11,7 +11,7 @@ public abstract class OpenAILanguageModelBase(HttpClient httpClient, bool suppor
     public virtual bool SupportFunctionCalls => true;
     public virtual bool SupportImageInputs => true;
     
-    public IExecutionInProgress Execute(ChatRequest request, CancellationToken cancellationToken) => new ExecutionInProgress(request, ExecuteImpl);
+    public IExecutionInProgress Execute(ChatRequest request, CancellationToken cancellationToken) => new ExecutionInProgress(request, cancellationToken, ExecuteImpl);
 
     struct ChunkOrDone
     {
@@ -230,6 +230,7 @@ public abstract class OpenAILanguageModelBase(HttpClient httpClient, bool suppor
             {
                 ["name"] = f.Name,
                 ["description"] = f.Description,
+                ["strict"] = f.Strict,
                 ["parameters"] = f.InputSchema.Deserialize<JsonObject>()
             }
         };
